@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "note-article-generator"
+version = "0.1.0"
+description = "Antigravity SDKを用いたWordPress WXR記事生成CLIツール"
+authors = [{ name = "Your Name" }]
+dependencies = [
+    "google-antigravity",
+    "python-dotenv",
+]
+requires-python = ">=3.10"
+
+[project.scripts]
+note-gen = "src.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
