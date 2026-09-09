@@ -9,7 +9,15 @@ When you ask your agent to write an article for WordPress, it will use this skil
 You can install this skill into your agent's environment using `skills`:
 
 ```bash
-npx skills add <your-repo>/note-article-generator-skill
+npx skills add ma684351/article-generator
+```
+
+Alternatively, for agents like Claude Code that support plugin commands:
+
+```bash
+# In Claude Code:
+/plugin add https://github.com/ma684351/article-generator
+# Or using a local path: /plugin add /path/to/article-generator
 ```
 
 ## Usage
