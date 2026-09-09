@@ -1,58 +1,89 @@
----
-name: generate-article
-description: WordPress用WXR形式の記事を自動生成するツール（`note-gen`）を実行し、指定されたタイトルや方向性に基づいてブログ記事を作成・保存するスキル。
----
+# WordPress WXR Article Generator
 
-# Generate Article Skill (`generate-article`)
+Generate a WordPress-compatible WXR XML file for a blog article.
 
-WordPressにインポート可能な WXR (XML) 形式の記事コンテンツを自動生成するスキルです。
+**Use when:**
+- "Write a WordPress article about [topic]"
+- "Generate a WXR file for [topic]"
+- "Create a blog post for WordPress"
+- "Draft an article in XML for WP import"
 
-## コマンド概要
+## Instructions
 
-記事生成には `note-gen` コマンドを使用します。Nix環境または仮想環境（`.venv`）上で動作します。
+You are a professional writer, blogger, and an expert on the specified topic.
+Based on the title or direction provided by the user (or if none is provided, by coming up with a compelling and useful theme and title that will capture the reader's interest), create a **WXR (WordPress eXtended RSS) format XML article file** that can be imported into WordPress.
+Automatically generate an appropriate Japanese category name and an English lowercase slug that matches the article content and include them in the output.
 
-### オプション
-- `-t, --title <タイトル>`: （任意）記事のタイトルを指定します。
-- `-d, --direction <指示・テーマ>`: （任意）記事のテーマ、トーン、ターゲット読者、構成の指定などの方向性を記述します。
+### 1. Output Format
+- Output MUST be valid **XML format**.
+- The response should only be the XML code. Do NOT wrap it in Markdown code blocks (e.g. ` ```xml ... ``` `).
+- Start the very first line with `<?xml version="1.0" encoding="UTF-8" ?>`.
+- The main body of the article MUST be enclosed in a **CDATA section (`<![CDATA[ ... ]]>`)** inside the `<content:encoded>` element.
 
-※ 引数をすべて省略した場合は、完全自動で最適なテーマ・タイトル・本文が生成されます。
+### 2. WXR Data Structure Template
+Maintain the exact XML structure below. Dynamically generate the parts with placeholders `{...}`.
 
-## 実行方法
-
-実行時の環境に応じて、以下のいずれかの方法でコマンドを実行してください。
-
-### 1. Nix環境経由での実行（推奨）
-```bash
-nix develop --extra-experimental-features "nix-command flakes" --command note-gen -t "タイトル" -d "記事の方向性"
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"
+	xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/commentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:wp="http://wordpress.org/export/1.2/"
+>
+  <channel>
+    <title>WordPress Export</title>
+    <link>http://localhost</link>
+    <description>WordPress Export Channel</description>
+    <language>ja</language>
+    <wp:wxr_version>1.2</wp:wxr_version>
+    <item>
+      <title>{タイトル}</title>
+      <dc:creator><![CDATA[admin]]></dc:creator>
+      <description></description>
+      <content:encoded><![CDATA[{記事本文 (HTML形式で記述)}]]></content:encoded>
+      <wp:post_id>1</wp:post_id>
+      <wp:post_date><![CDATA[2026-08-08 00:00:00]]></wp:post_date>
+      <wp:post_date_gmt><![CDATA[2026-08-07 15:00:00]]></wp:post_date_gmt>
+      <wp:comment_status><![CDATA[open]]></wp:comment_status>
+      <wp:ping_status><![CDATA[open]]></wp:ping_status>
+      <wp:post_name>{英語またはローマ字表記でサニタイズされた投稿スラッグ}</wp:post_name>
+      <wp:status><![CDATA[publish]]></wp:status>
+      <wp:post_parent>0</wp:post_parent>
+      <wp:menu_order>0</wp:menu_order>
+      <wp:post_type><![CDATA[post]]></wp:post_type>
+      <wp:post_password><![CDATA[]]></wp:post_password>
+      <wp:is_sticky>0</wp:is_sticky>
+      <category domain="category" nicename="{カテゴリのスラッグ}"><![CDATA[{カテゴリ}]]></category>
+    </item>
+  </channel>
+</rss>
 ```
 
-### 2. Python仮想環境での実行
-仮想環境が有効な場合、またはプロジェクト直下の `.venv` を使用する場合:
-```bash
-.venv/bin/note-gen -t "タイトル" -d "記事の方向性"
-# または
-python3 -m src.cli -t "タイトル" -d "記事の方向性"
-```
+### 3. Article Body Markup Rules (`<content:encoded>`)
+- Compose the text using **HTML tags** so that it renders correctly in the WordPress Block Editor or Classic Editor.
+- **Usable HTML elements**:
+  - Headings: `<h2>Heading 2</h2>` and `<h3>Heading 3</h3>`
+  - Paragraphs: `<p>Text</p>` (Separate each paragraph appropriately)
+  - Emphasis: `<strong>Emphasis word</strong>`
+  - Bullet List: `<ul><li>List item</li></ul>`
+  - Numbered List: `<ol><li>Step 1</li></ol>`
+  - Blockquote: `<blockquote><p>Quoted text</p></blockquote>`
+  - Strikethrough: `<del>Strikethrough text</del>`
+  - Horizontal Rule: `<hr />`
+  - Line Break: Use `<br />` only when a forced line break within a sentence is necessary.
 
-## 使用例
+### 4. Tone and Manner
+- Write in friendly, easy-to-understand Japanese (basically using "Desu/Masu" style).
+- When using technical terms, include simple explanations or metaphors for beginners.
+- Be conscious of writing sentences that evoke the reader's empathy and encourage action.
 
-### 例1: タイトルと方向性を指定して生成
-```bash
-nix develop --extra-experimental-features "nix-command flakes" --command note-gen -t "2026年注目のWeb開発トレンドまとめ" -d "フロントエンド・バックエンドの最新動向を初心者にも分かりやすくまとめてください。"
-```
+### 5. Example Article Structure
+- **Introduction (Lead)**: Attract the reader by addressing their worries or interests, and state the benefits of reading the article.
+- **Body**: Explain specific and practical content along with each heading.
+- **Conclusion**: Summarize the main points of the entire article, and write a message to the reader or a call to action for the next step (e.g., "Please give it a try").
 
-### 例2: テーマ指示のみでタイトルはAIに自動決定させる
-```bash
-nix develop --extra-experimental-features "nix-command flakes" --command note-gen -d "初心者向けのPythonプログラミング学習ロードマップ"
-```
-
-### 例3: 完全自動生成
-```bash
-nix develop --extra-experimental-features "nix-command flakes" --command note-gen
-```
-
-## 出力結果の確認
-
-生成された記事は、プロジェクトの `output/` ディレクトリ配下に `{タイトル}.xml`（またはタイムスタンプ名）として出力・保存されます。
-
-生成完了後、`output/` ディレクトリ内の XML ファイルが作成されたことを確認してください。
+### 6. Layout Characteristics
+- Since the article will be imported and used, a simple and beautiful layout is characteristic. Do not over-decorate, and be conscious of text readability. Insert moderate line breaks so that long sentences do not continue.
+- Structure it so that it leaves a good aftertaste and makes readers want to share it (spread on SNS).

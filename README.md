@@ -12,6 +12,14 @@ You can install this skill into your agent's environment using `skills`:
 npx skills add <your-repo>/note-article-generator-skill
 ```
 
+Alternatively, for agents like Claude Code that support plugin commands:
+
+```bash
+# In Claude Code:
+/plugin add https://github.com/<your-repo>/note-article-generator-skill
+# Or using a local path: /plugin add /path/to/note-article-generator-skill
+```
+
 ## Usage
 
 Once the skill is installed, simply prompt your agent:
