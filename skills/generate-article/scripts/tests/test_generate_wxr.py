@@ -3,6 +3,7 @@ import os
 import json
 import subprocess
 import tempfile
+import sys
 
 SCRIPT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'generate_wxr.py'))
 
@@ -23,7 +24,7 @@ def test_generate_wxr_success():
         temp_output = f_out.name
 
     try:
-        result = subprocess.run(['python', SCRIPT_PATH, temp_input, temp_output], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, SCRIPT_PATH, temp_input, temp_output], capture_output=True, text=True)
         assert result.returncode == 0
 
         with open(temp_output, 'r', encoding='utf-8') as f:
@@ -54,7 +55,7 @@ def test_generate_wxr_missing_key():
         temp_output = f_out.name
 
     try:
-        result = subprocess.run(['python', SCRIPT_PATH, temp_input, temp_output], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, SCRIPT_PATH, temp_input, temp_output], capture_output=True, text=True)
         assert result.returncode == 1
         assert "Error:" in result.stdout
     finally:

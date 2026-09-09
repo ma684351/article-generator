@@ -1,0 +1,8 @@
+{
+  "name": "generate-article",
+  "version": "1.0.0",
+  "description": "ブログ記事用のWordPress互換WXR XMLファイルを生成するAgent Skill",
+  "author": {
+    "name": "ma684351"
+  }
+}

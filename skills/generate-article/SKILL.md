@@ -1,3 +1,10 @@
+---
+name: generate-article
+description: ブログ記事用のWordPress互換WXR XMLファイルを生成します。「WordPressの記事を書いて」「WXRファイルを生成して」などのリクエストで使用します。
+compatibility: Python 3.9+
+allowed-tools: bash run_command terminal
+---
+
 # WordPress WXR Article Generator
 
 ブログ記事用のWordPress互換WXR XMLファイルを生成します。
@@ -15,14 +22,51 @@
 記事の内容に合った適切な日本語のカテゴリ名と、英語の小文字スラッグを自動生成し、最終出力に含めてください。
 
 ### 1. 記事生成と品質チェックのワークフロー
-自然な日本語の記事を生成するため、XMLを直接出力するのではなく、**必ず以下のステップ（JSONの生成 → Lint → XML生成）で進めてください**：
+自然で高品質な日本語記事を生成するため、XMLを直接出力するのではなく、**必ずAI自身がコマンド実行ツール（Bash / run_command等）を使用して以下のステップ（JSON生成 → スクリプト実行によるLintチェック → スクリプト実行によるWXR XML生成）を自律的に進めてください**。
 
-1. **下書き（JSON）の保存**: まず、記事の構成要素（タイトル、カテゴリ、スラッグ、本文HTML）をまとめた **JSONファイル** をローカル（例: `draft.json`）に保存します。**記事のボリューム（最低800文字以上）を確保するため、各見出しに対して具体的な事例や詳しい解説を含めてください。**
-2. **依存関係のインストール**: `pip install -r .agents/skills/generate-article/requirements.txt` を実行します。
-3. **Lintチェックの実行**: `python .agents/skills/generate-article/scripts/lint_japanese.py <下書きのJSONファイルパス>` を実行します。
-4. **自己修正**: スクリプトから日本語の不自然さ（AI特有の禁止語、同じ文末表現の連続、文字数不足など）について警告が出た場合、あなた自身（AI）がその指摘を読み、より自然な日本語になるようJSONを修正・上書き保存してください。警告が出なくなるまでこのプロセスを繰り返します。
-5. **XMLの生成**: Lintをクリアしたら、`python .agents/skills/generate-article/scripts/generate_wxr.py <下書きのJSONファイルパス> output.xml` を実行して最終的なWXRファイルを作成します。
-6. **最終出力**: 生成された `output.xml` の中身を読み取り、XMLコードブロックとしてユーザーに提示してください（またはファイルをユーザーに提供してください）。
+#### スクリプトのパス解決について
+本スキルには以下の補助スクリプトおよび依存関係定義が同梱されています：
+- 依存ライブラリ定義: [`requirements.txt`](./requirements.txt)
+- 日本語Lintスクリプト: [`scripts/lint_japanese.py`](./scripts/lint_japanese.py)
+- WXR生成スクリプト: [`scripts/generate_wxr.py`](./scripts/generate_wxr.py)
+
+> **重要**: `npx skills add` 等で本スキルが任意の場所（プロジェクトの `.agents/skills/` やグローバルの `~/.claude/skills/` 等）にインストールされた場合でも実行できるように、**この `SKILL.md` が配置されているディレクトリ（スキルディレクトリ: `<SKILL_DIR>`）のパスを基準にしてスクリプトを呼び出してください**。
+> 例:
+> - この `SKILL.md` のファイルパスから親ディレクトリ `<SKILL_DIR>` を特定して実行
+> - または、`scripts/lint_japanese.py` の相対パスまたは実体パスを検索して特定
+
+#### 実行ステップ:
+1. **下書き（JSON）の保存**:
+   まず、記事の構成要素（タイトル、カテゴリ、スラッグ、本文HTML）をまとめた **JSONファイル** を現在の作業ディレクトリ（例: `draft.json`）に保存します。**記事のボリューム（最低800文字以上）を確保するため、各見出しに対して具体的な事例や詳しい解説を含めてください。**
+
+2. **仮想環境（venv）の準備と依存関係のインストール**:
+   ホスト環境を汚さず安定した実行を行うため、スキルディレクトリ直下の `.venv` 仮想環境を使用します。
+   ```bash
+   # .venv が存在しない場合は作成
+   [ -d "<SKILL_DIR>/.venv" ] || python3 -m venv "<SKILL_DIR>/.venv"
+
+   # 固定バージョンの依存パッケージをインストール（すでにインストール済みの場合はスキップ可）
+   "<SKILL_DIR>/.venv/bin/pip" install -r "<SKILL_DIR>/requirements.txt"
+   ```
+   *(※Windows環境の場合は `<SKILL_DIR>/.venv/Scripts/pip` および `<SKILL_DIR>/.venv/Scripts/python` を使用してください)*
+
+3. **Lintチェックの実行**:
+   仮想環境内のPythonを使用して、作成した下書きJSONの日本語品質をチェックします：
+   ```bash
+   "<SKILL_DIR>/.venv/bin/python" "<SKILL_DIR>/scripts/lint_japanese.py" draft.json
+   ```
+
+4. **自己修正ループ**:
+   スクリプトから日本語の不自然さ（AI特有の禁止語、同じ文末表現の連続、文字数不足など）について警告が出力された場合、あなた自身（AI）がその指摘を読み、より自然な日本語になるようJSONを修正・上書き保存してください。警告が出なくなる（終了コード0）までステップ3〜4を繰り返します。
+
+5. **XMLの生成**:
+   Lintをクリアしたら、仮想環境内のPythonでWXRビルドスクリプトを実行して最終的なXMLファイルを出力します：
+   ```bash
+   "<SKILL_DIR>/.venv/bin/python" "<SKILL_DIR>/scripts/generate_wxr.py" draft.json output.xml
+   ```
+
+6. **最終出力**:
+   生成された `output.xml` の中身を読み取り、XMLコードブロックとしてユーザーに提示してください（またはファイルをユーザーに提供してください）。
 
 ### 2. 下書きファイル（JSON）のフォーマット
 以下の構造でJSONファイルを作成してください。
