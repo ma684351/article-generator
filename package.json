@@ -1,0 +1,8 @@
+{
+  "name": "note-article-generator-skill",
+  "version": "1.0.0",
+  "description": "Agent skill for generating WordPress WXR articles.",
+  "keywords": ["skill", "agent-skill", "wordpress", "wxr", "article-generator"],
+  "author": "Your Name",
+  "license": "MIT"
+}
