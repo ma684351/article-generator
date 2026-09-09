@@ -1,0 +1,14 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "article-generator",
+  "owner": {
+    "name": "ma684351"
+  },
+  "plugins": [
+    {
+      "name": "generate-article",
+      "description": "ブログ記事用のWordPress互換WXR XMLファイルを生成するAgent Skill",
+      "source": "./"
+    }
+  ]
+}

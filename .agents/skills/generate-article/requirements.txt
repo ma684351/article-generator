@@ -1,2 +1,0 @@
-sudachipy>=0.6.7
-sudachidict-core>=20230110
