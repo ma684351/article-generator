@@ -18,10 +18,10 @@
 自然な日本語の記事を生成するため、XMLを直接出力するのではなく、**必ず以下のステップ（JSONの生成 → Lint → XML生成）で進めてください**：
 
 1. **下書き（JSON）の保存**: まず、記事の構成要素（タイトル、カテゴリ、スラッグ、本文HTML）をまとめた **JSONファイル** をローカル（例: `draft.json`）に保存します。**記事のボリューム（最低800文字以上）を確保するため、各見出しに対して具体的な事例や詳しい解説を含めてください。**
-2. **依存関係のインストール**: `pip install -r requirements.txt` を実行します。
-3. **Lintチェックの実行**: `python scripts/lint_japanese.py <下書きのJSONファイルパス>` を実行します。
+2. **依存関係のインストール**: `pip install -r .agents/skills/generate-article/requirements.txt` を実行します。
+3. **Lintチェックの実行**: `python .agents/skills/generate-article/scripts/lint_japanese.py <下書きのJSONファイルパス>` を実行します。
 4. **自己修正**: スクリプトから日本語の不自然さ（AI特有の禁止語、同じ文末表現の連続、文字数不足など）について警告が出た場合、あなた自身（AI）がその指摘を読み、より自然な日本語になるようJSONを修正・上書き保存してください。警告が出なくなるまでこのプロセスを繰り返します。
-5. **XMLの生成**: Lintをクリアしたら、`python scripts/generate_wxr.py <下書きのJSONファイルパス> output.xml` を実行して最終的なWXRファイルを作成します。
+5. **XMLの生成**: Lintをクリアしたら、`python .agents/skills/generate-article/scripts/generate_wxr.py <下書きのJSONファイルパス> output.xml` を実行して最終的なWXRファイルを作成します。
 6. **最終出力**: 生成された `output.xml` の中身を読み取り、XMLコードブロックとしてユーザーに提示してください（またはファイルをユーザーに提供してください）。
 
 ### 2. 下書きファイル（JSON）のフォーマット
