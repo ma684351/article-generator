@@ -1,1 +1,0 @@
-# note-article-generator package
