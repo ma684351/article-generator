@@ -1,5 +1,6 @@
 import sys
 import re
+import json
 from sudachipy import dictionary
 from sudachipy import tokenizer
 
@@ -113,28 +114,20 @@ def analyze_text(text: str):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python lint_japanese.py <wxr_file.xml>")
+        print("Usage: python lint_japanese.py <input.json>")
         sys.exit(1)
 
     file_path = sys.argv[1]
 
     try:
-        # WXRXMLはそのままパースするとnamespace周りが面倒な場合があるので、簡易的にテキスト抽出する
         with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+            data = json.load(f)
 
-        # <content:encoded><![CDATA[ ... ]]></content:encoded> を抽出
-        match = re.search(r'<content:encoded><!\[CDATA\[(.*?)\]\]></content:encoded>', content, re.DOTALL)
-        if match:
-            article_text = match.group(1)
-        else:
-            # CDATAがない場合
-            match = re.search(r'<content:encoded>(.*?)</content:encoded>', content, re.DOTALL)
-            if match:
-                article_text = match.group(1)
-            else:
-                print("Error: <content:encoded> 要素が見つかりません。")
-                sys.exit(1)
+        if 'content' not in data:
+            print("Error: JSONファイルに 'content' キーが見つかりません。")
+            sys.exit(1)
+
+        article_text = data['content']
 
         print(f"ファイルを解析中: {file_path}")
         issues = analyze_text(article_text)
