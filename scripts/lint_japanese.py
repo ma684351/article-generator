@@ -38,6 +38,7 @@ def analyze_text(text: str):
 
     previous_ending = None
     consecutive_ending_count = 0
+    total_characters = 0
 
     for i, line in enumerate(lines):
         line = line.strip()
@@ -48,6 +49,8 @@ def analyze_text(text: str):
         clean_line = re.sub(r'<[^>]+>', '', line)
         if not clean_line:
             continue
+
+        total_characters += len(clean_line.replace(" ", "").replace("　", ""))
 
         # 1. 一文の長さチェック (100文字超え)
         sentences = re.split(r'(?<=。)', clean_line)
@@ -101,6 +104,9 @@ def analyze_text(text: str):
                  previous_ending = None
                  consecutive_ending_count = 0
 
+    # 4. 全体文字数チェック (短すぎる記事の防止)
+    if total_characters < 800:
+        issues.append(f"[全体] 記事の文字数が少なすぎます（現在 {total_characters} 文字）。見出しを追加し、具体例を交えてより詳しく解説し、最低でも800文字以上になるように加筆してください。")
 
     return issues
 
