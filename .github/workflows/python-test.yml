@@ -24,6 +24,11 @@ jobs:
         pip install -r skills/generate-article/requirements.txt
         pip install -r skills/generate-article/requirements-dev.txt
 
+    - name: Run linter with ruff
+      run: |
+        cd skills/generate-article/scripts
+        ruff check .
+
     - name: Run tests with pytest
       run: |
         cd skills/generate-article/scripts
