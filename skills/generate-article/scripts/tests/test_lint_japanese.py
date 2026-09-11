@@ -1,4 +1,3 @@
-import pytest
 import os
 import sys
 
@@ -6,6 +5,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from lint_japanese import analyze_text
+
 
 def test_analyze_text_too_short():
     # 800文字未満のテスト

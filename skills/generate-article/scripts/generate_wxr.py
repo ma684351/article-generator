@@ -1,6 +1,6 @@
-import sys
 import json
-from datetime import datetime
+import sys
+from datetime import datetime, timezone
 
 WXR_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0"
@@ -59,7 +59,7 @@ def main():
                 sys.exit(1)
 
         # 現在時刻をダミーの投稿日として使用
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         post_date = now.strftime("%Y-%m-%d %H:%M:%S")
         post_date_gmt = now.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -78,7 +78,7 @@ def main():
 
         print(f"✅ WXRファイルを生成しました: {output_file}")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"エラーが発生しました: {e}")
         sys.exit(1)
 

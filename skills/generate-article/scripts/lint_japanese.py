@@ -1,9 +1,9 @@
 import argparse
-import sys
-import re
 import json
-from sudachipy import dictionary
-from sudachipy import tokenizer
+import re
+import sys
+
+from sudachipy import dictionary, tokenizer
 
 # --- AI特有の禁止語リスト ---
 FORBIDDEN_WORDS = [
@@ -26,13 +26,13 @@ SENTENCE_ENDINGS = [
     "です", "ます", "でした", "ました", "でしょう", "ましょう"
 ]
 
-def analyze_text(text: str, min_length: int = None):
+def analyze_text(text: str, min_length: int | None = None):
     issues = []
 
     # Sudachiの初期化
     try:
         tokenizer_obj = dictionary.Dictionary(dict="core").create()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"辞書の初期化に失敗しました。要件を確認してください: {e}")
         return []
 
@@ -157,7 +157,7 @@ def main():
             print("\n✅ 問題は見つかりませんでした。自然な日本語です。")
             sys.exit(0)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
          print(f"エラーが発生しました: {e}")
          sys.exit(1)
 
