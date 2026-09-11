@@ -48,6 +48,16 @@ def analyze_text(text: str):
 
         # HTMLタグの除去 (簡単なもの)
         clean_line = re.sub(r'<[^>]+>', '', line)
+
+        # マークダウン記法の除去 (見出し、太字、斜体、引用、リストなど)
+        clean_line = re.sub(r'^(#+\s+|\*\s+|-\s+|\d+\.\s+|>\s+)', '', clean_line) # 行頭の記号
+        clean_line = re.sub(r'(\*\*|__)(.*?)\1', r'\2', clean_line) # 太字
+        clean_line = re.sub(r'(\*|_)(.*?)\1', r'\2', clean_line)    # 斜体
+        clean_line = re.sub(r'~~(.*?)~~', r'\1', clean_line)        # 取り消し線
+        clean_line = re.sub(r'`(.*?)`', r'\1', clean_line)          # インラインコード
+        clean_line = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', clean_line) # リンク
+
+        clean_line = clean_line.strip()
         if not clean_line:
             continue
 
