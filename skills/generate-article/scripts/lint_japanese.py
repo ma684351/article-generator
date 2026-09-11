@@ -1,3 +1,4 @@
+import argparse
 import sys
 import re
 import json
@@ -25,7 +26,7 @@ SENTENCE_ENDINGS = [
     "です", "ます", "でした", "ました", "でしょう", "ましょう"
 ]
 
-def analyze_text(text: str):
+def analyze_text(text: str, min_length: int = None):
     issues = []
 
     # Sudachiの初期化
@@ -116,18 +117,20 @@ def analyze_text(text: str):
                  consecutive_ending_count = 0
 
     # 4. 全体文字数チェック (短すぎる記事の防止)
-    if total_characters < 800:
-        issues.append(f"[全体] 記事の文字数が少なすぎます（現在 {total_characters} 文字）。見出しを追加し、具体例を交えてより詳しく解説し、最低でも800文字以上になるように加筆してください。")
+    if min_length is not None and total_characters < min_length:
+        issues.append(f"[全体] 記事の文字数が少なすぎます（現在 {total_characters} 文字）。見出しを追加し、具体例を交えてより詳しく解説し、最低でも{min_length}文字以上になるように加筆してください。")
 
     return issues
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python lint_japanese.py <input.json>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Lint Japanese text from a JSON file.")
+    parser.add_argument("input_json", help="Path to the input JSON file.")
+    parser.add_argument("--min-length", type=int, default=None, help="Minimum required character length.")
 
-    file_path = sys.argv[1]
+    args = parser.parse_args()
+    file_path = args.input_json
+    min_length = args.min_length
 
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -140,7 +143,9 @@ def main():
         article_text = data['content']
 
         print(f"ファイルを解析中: {file_path}")
-        issues = analyze_text(article_text)
+        if min_length is not None:
+            print(f"最小文字数制限: {min_length}文字")
+        issues = analyze_text(article_text, min_length=min_length)
 
         if issues:
             print("\n🚨 以下の日本語の不自然な箇所が検出されました。AIエージェントはこれらを判断して修正してください。:\n")
