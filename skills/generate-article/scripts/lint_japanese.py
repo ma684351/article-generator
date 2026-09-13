@@ -21,6 +21,12 @@ FORBIDDEN_WORDS = [
     r"まとめとして",
 ]
 
+# --- AI特有の過剰なカッコ補足（ルビなど）の判定用正規表現 ---
+AI_BRACKET_PATTERNS = [
+    r"[一-龠]+[（\(][ぁ-ん]+[）\)]",     # 漢字のあとにひらがなカッコ (例: 漢字(ひらがな))
+    r"[a-zA-Z]+[（\(][ァ-ヶー]+[）\)]",  # アルファベットのあとにカタカナカッコ (例: Alphabet(カタカナ))
+]
+
 # --- 助動詞・語尾判定用の簡易リスト ---
 SENTENCE_ENDINGS = [
     "です", "ます", "でした", "ました", "でしょう", "ましょう"
@@ -79,7 +85,12 @@ def analyze_text(text: str, min_length: int | None = None):
                 if re.search(pattern, sentence):
                     issues.append(f"[Line {i+1}] AI特有の表現を検出: 「{pattern}」 -> {sentence}")
 
-            # 3. 文末表現の連続チェック (形態素解析を活用)
+            # 3. AI特有のカッコ補足（ルビなど）チェック
+            for pattern in AI_BRACKET_PATTERNS:
+                if re.search(pattern, sentence):
+                    issues.append(f"[Line {i+1}] AI特有の不要なカッコ書き（ルビ・補足）を検出しました: -> {sentence}")
+
+            # 4. 文末表現の連続チェック (形態素解析を活用)
             mode = tokenizer.Tokenizer.SplitMode.C
             morphemes = tokenizer_obj.tokenize(sentence, mode)
 
