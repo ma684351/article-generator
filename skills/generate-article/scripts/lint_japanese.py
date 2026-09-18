@@ -7,24 +7,24 @@ from sudachipy import dictionary, tokenizer
 
 # --- AI特有の禁止語リスト ---
 FORBIDDEN_WORDS = [
-    r"と言えるでしょう",
-    r"と言えるのではないでしょうか",
-    r"について深掘り",
-    r"興味深いことに",
-    r"注目すべき点は",
-    r"なのだ",
-    r"である", # デスマスの混在チェックも兼ねる
-    r"重要な役割を果た(す|し)",
-    r"焦点を当て",
-    r"不可欠(です|な)",
-    r"結論として",
-    r"まとめとして",
+    re.compile(r"と言えるでしょう"),
+    re.compile(r"と言えるのではないでしょうか"),
+    re.compile(r"について深掘り"),
+    re.compile(r"興味深いことに"),
+    re.compile(r"注目すべき点は"),
+    re.compile(r"なのだ"),
+    re.compile(r"である"), # デスマスの混在チェックも兼ねる
+    re.compile(r"重要な役割を果た(す|し)"),
+    re.compile(r"焦点を当て"),
+    re.compile(r"不可欠(です|な)"),
+    re.compile(r"結論として"),
+    re.compile(r"まとめとして"),
 ]
 
 # --- AI特有の過剰なカッコ補足（ルビなど）の判定用正規表現 ---
 AI_BRACKET_PATTERNS = [
-    r"[一-龠]+[（\(][ぁ-ん]+[）\)]",     # 漢字のあとにひらがなカッコ (例: 漢字(ひらがな))
-    r"[a-zA-Z]+[（\(][ァ-ヶー]+[）\)]",  # アルファベットのあとにカタカナカッコ (例: Alphabet(カタカナ))
+    re.compile(r"[一-龠]+[（\(][ぁ-ん]+[）\)]"),     # 漢字のあとにひらがなカッコ (例: 漢字(ひらがな))
+    re.compile(r"[a-zA-Z]+[（\(][ァ-ヶー]+[）\)]"),  # アルファベットのあとにカタカナカッコ (例: Alphabet(カタカナ))
 ]
 
 # --- 助動詞・語尾判定用の簡易リスト ---
@@ -82,12 +82,12 @@ def analyze_text(text: str, min_length: int | None = None):
 
             # 2. 禁止語チェック
             for pattern in FORBIDDEN_WORDS:
-                if re.search(pattern, sentence):
-                    issues.append(f"[Line {i+1}] AI特有の表現を検出: 「{pattern}」 -> {sentence}")
+                if pattern.search(sentence):
+                    issues.append(f"[Line {i+1}] AI特有の表現を検出: 「{pattern.pattern}」 -> {sentence}")
 
             # 3. AI特有のカッコ補足（ルビなど）チェック
             for pattern in AI_BRACKET_PATTERNS:
-                if re.search(pattern, sentence):
+                if pattern.search(sentence):
                     issues.append(f"[Line {i+1}] AI特有の不要なカッコ書き（ルビ・補足）を検出しました: -> {sentence}")
 
             # 4. 文末表現の連続チェック (形態素解析を活用)
