@@ -1,13 +1,13 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "article-generator",
+  "name": "natural-japanese-skill",
   "owner": {
     "name": "ma684351"
   },
   "plugins": [
     {
-      "name": "generate-article",
-      "description": "ブログ記事用のWordPress互換WXR XMLファイルを生成するAgent Skill",
+      "name": "natural-japanese",
+      "description": "自然な日本語の執筆・推敲を支援し、WordPress互換WXR XMLファイルの出力も可能なAgent Skill",
       "source": "./"
     }
   ]
