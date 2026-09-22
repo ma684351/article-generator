@@ -29,7 +29,10 @@ AI特有の不自然な表現（「〜と言えるでしょう」「重要な役
 - 日本語Lintスクリプト: [`scripts/lint.py`](./scripts/lint.py)
 - 構成チェックスクリプト: [`scripts/outline.py`](./scripts/outline.py)
 - 専門用語チェックスクリプト: [`scripts/terms.py`](./scripts/terms.py)
+- 深層意味検出スクリプト: [`scripts/semantic.py`](./scripts/semantic.py)（※高度な推敲用、opt-in）
 - WXR生成スクリプト: [`scripts/generate_wxr.py`](./scripts/generate_wxr.py)（※WordPress指定時のみ使用）
+
+なお、各スクリプト（`lint.py`, `outline.py`, `terms.py` 等）の共通の処理やデータ構造は、共有基盤である [`scripts/textcore.py`](./scripts/textcore.py) にまとめられており、直接実行されることはありませんが重要なモジュールとして機能します。
 
 > **重要**: スキルが任意の場所（プロジェクトの `.agents/skills/` 等）にインストールされても実行できるように、**この `SKILL.md` が配置されているディレクトリ（スキルディレクトリ: `<SKILL_DIR>`）のパスを基準にしてスクリプトを呼び出してください**。
 > また、`lint.py` 等のスクリプトはMarkdownやテキストファイルを直接読み込むように作られているため、一度マークダウン等（例: `draft.md`）で保存してからチェックしてください。WXR出力が必要な場合は別途 `draft.json` にまとめてから変換します。
@@ -56,6 +59,10 @@ AI特有の不自然な表現（「〜と言えるでしょう」「重要な役
 
    # 3. 専門用語と初出説明の確認
    "<SKILL_DIR>/.venv/bin/python" "<SKILL_DIR>/scripts/terms.py" draft.md
+
+   # 4. (オプトイン) 話題の平板さの深層検出 (EXPERIMENTAL)
+   # ※モデルのダウンロード(約1GB)を伴うため、高度な推敲時(フル工程)や環境が許す場合のみ実行します
+   # "<SKILL_DIR>/.venv/bin/python" "<SKILL_DIR>/scripts/semantic.py" draft.md --json
    ```
 
 4. **自己修正 (Self-Correction Loop)**:
@@ -81,6 +88,13 @@ AI特有の不自然な表現（「〜と言えるでしょう」「重要な役
      "<SKILL_DIR>/.venv/bin/python" "<SKILL_DIR>/scripts/generate_wxr.py" draft.json output.xml
      ```
      作成された `output.xml` をXMLコードブロックとして提示してください。
+
+### 開発・メンテナンス用スクリプト
+
+本スキルには、検出器の精度向上やコーパス分析を目的とした開発用スクリプトも含まれています。これらは通常の文章作成フローでは実行しませんが、ルールの調整時に使用します。
+
+- **検出器の校正・分析**: [`scripts/calibrate.py`](./scripts/calibrate.py)
+  - `lint.py` の各種検出器の閾値パラメータをスイープして評価したり、ジャンルごとのヒット率マトリクスを出力するなど、統計的な校正を行うために使用します。
 
 ### 3. トーン＆マナーと「AI臭さ」の排除（文体憲法）
 以下のルールに従って、自然で読みやすい日本語を記述してください。
