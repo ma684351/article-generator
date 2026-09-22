@@ -35,8 +35,6 @@ import sys
 from pathlib import Path
 
 from textcore import (
-    NOUN_ENDING_POS,
-    TEMPLATE_HEADING_WORDS,
     _BLOCKQUOTE_RE,
     _CODE_FENCE_RE,
     _FRONT_MATTER_DELIM_RE,
@@ -44,6 +42,8 @@ from textcore import (
     _LIST_ITEM_RE,
     _TABLE_DELIMITER_RE,
     _TABLE_ROW_RE,
+    NOUN_ENDING_POS,
+    TEMPLATE_HEADING_WORDS,
     _heading_level_and_text,
     get_tokenizer,
     mask_html_comments,

@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import itertools
 import json
 import re
 import statistics
@@ -40,10 +41,10 @@ import sys
 from pathlib import Path
 
 from textcore import (
-    Finding,
-    SENTENCE_SPLIT_RE,
     _HEADING_RE,
     _LIST_ITEM_RE,
+    SENTENCE_SPLIT_RE,
+    Finding,
     get_tokenizer,
     iter_lines_with_no,
     iter_paragraphs_with_lines,
@@ -1494,7 +1495,7 @@ def detect_english_syntax_smell(
     sentences = split_sentences_with_lines(lines, raw_lines_by_no)
     for i in range(len(sentences) - 1):
         no1, s1, r1 = sentences[i]
-        no2, s2, r2 = sentences[i + 1]
+        _no2, s2, r2 = sentences[i + 1]
         if CLEFT_BECAUSE_HEAD.match(s1) and BECAUSE_HEAD.match(s2):
             findings.append(
                 Finding(
@@ -1534,15 +1535,15 @@ def detect_inanimate_subject_morph(tokenized: list[TokenizedSentence]) -> list[F
                 poss[i] == "名詞" and surfaces[i] in {"こと", "事実", "の"}
             )
             subject_end = i
-            if not is_abstract_subject:
-                # 2形態素にまたがる指示表現（「この」+「事実」等）を、
-                # 隣接する形態素を連結した表層文字列で判定する
-                if (
-                    i + 1 < n
-                    and (surfaces[i] + surfaces[i + 1]) in ABSTRACT_PRONOUN_PHRASES
-                ):
-                    is_abstract_subject = True
-                    subject_end = i + 1
+            # 2形態素にまたがる指示表現（「この」+「事実」等）を、
+            # 隣接する形態素を連結した表層文字列で判定する
+            if (
+                not is_abstract_subject
+                and i + 1 < n
+                and (surfaces[i] + surfaces[i + 1]) in ABSTRACT_PRONOUN_PHRASES
+            ):
+                is_abstract_subject = True
+                subject_end = i + 1
             if not is_abstract_subject:
                 continue
             skip_until = max(skip_until, subject_end)
@@ -2028,7 +2029,7 @@ def detect_reading_load(
 
         # --- A1/A2: 二重否定・否定の入れ子 ---
         negation_idx = [i for i, m in enumerate(morphemes) if _is_negation(m)]
-        for a, b in zip(negation_idx, negation_idx[1:]):
+        for a, b in itertools.pairwise(negation_idx):
             span = "".join(m.surface() for m in morphemes[a : b + 1])
             if (
                 b - a <= READING_LOAD_NEGATION_MAX_GAP
@@ -2060,7 +2061,7 @@ def detect_reading_load(
         ]
         for k in range(len(no_idx) - READING_LOAD_NO_CHAIN_MIN + 1):
             window = no_idx[k : k + READING_LOAD_NO_CHAIN_MIN]
-            gaps_ok = all(y - x <= 3 for x, y in zip(window, window[1:]))
+            gaps_ok = all(y - x <= 3 for x, y in itertools.pairwise(window))
             if gaps_ok and not _has_punctuation_between(
                 morphemes, window[0], window[-1]
             ):

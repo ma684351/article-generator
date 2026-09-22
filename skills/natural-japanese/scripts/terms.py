@@ -106,7 +106,7 @@ def _term_context_and_gloss_hint(
     term_start_local = abs_pos - ctx_start
     term_end_local = term_start_local + len(term)
     after = context[term_end_local : term_end_local + 2]
-    has_gloss_hint = after.startswith("(") or after.startswith("（")
+    has_gloss_hint = after.startswith(("(", "（"))
     if not has_gloss_hint:
         has_gloss_hint = any(marker in context for marker in TERMS_GLOSS_MARKER_WORDS)
 
