@@ -34,3 +34,4 @@ output/
 Thumbs.db
 .vscode/
 .idea/
+test-venv/
