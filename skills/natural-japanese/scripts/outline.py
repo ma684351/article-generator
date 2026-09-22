@@ -99,9 +99,9 @@ def build_outline(raw_text: str) -> list[dict]:
             return "bullets"
         if _BLOCKQUOTE_RE.match(line_text):
             return "blockquote"
-        if (_TABLE_ROW_RE.match(line_text) and line_text.count("|") >= 2) or _TABLE_DELIMITER_RE.match(
-            line_text
-        ):
+        if (
+            _TABLE_ROW_RE.match(line_text) and line_text.count("|") >= 2
+        ) or _TABLE_DELIMITER_RE.match(line_text):
             return "table"
         return "lead"
 
@@ -112,20 +112,27 @@ def build_outline(raw_text: str) -> list[dict]:
         if _LIST_ITEM_RE.match(first_line):
             count = sum(1 for _, line_text in buffer if _LIST_ITEM_RE.match(line_text))
             outline.append(
-                {"line": first_no, "kind": "bullets", "level": None, "text": f"(箇条書き {count} 項目)"}
+                {
+                    "line": first_no,
+                    "kind": "bullets",
+                    "level": None,
+                    "text": f"(箇条書き {count} 項目)",
+                }
             )
         elif _BLOCKQUOTE_RE.match(first_line):
             pass  # 引用ブロックは段落として扱わずスキップ
-        elif (_TABLE_ROW_RE.match(first_line) and first_line.count("|") >= 2) or _TABLE_DELIMITER_RE.match(
-            first_line
-        ):
+        elif (
+            _TABLE_ROW_RE.match(first_line) and first_line.count("|") >= 2
+        ) or _TABLE_DELIMITER_RE.match(first_line):
             pass  # 表はスキップ
         else:
             m = re.search(r"[。！？]", first_line)
             lead = first_line[: m.end()] if m else first_line
             lead = lead.strip()
             if lead:
-                outline.append({"line": first_no, "kind": "lead", "level": None, "text": lead})
+                outline.append(
+                    {"line": first_no, "kind": "lead", "level": None, "text": lead}
+                )
         buffer.clear()
 
     for i, line in enumerate(lines, start=1):
@@ -159,7 +166,9 @@ def build_outline(raw_text: str) -> list[dict]:
         if _HEADING_RE.match(line):
             flush_buffer()
             level, heading_text = _heading_level_and_text(line)
-            outline.append({"line": i, "kind": "heading", "level": level, "text": heading_text})
+            outline.append(
+                {"line": i, "kind": "heading", "level": level, "text": heading_text}
+            )
             continue
 
         # 空行を挟まずにブロック種別（箇条書き/引用/表/通常段落）が切り替わった
@@ -310,9 +319,13 @@ def _summarize_heading_group(headings: list[dict]) -> dict:
     for h in headings:
         word = _match_template_word(h["text"])
         if word is not None:
-            template_hits.append({"line": h["line"], "text": h["text"], "matched": word})
+            template_hits.append(
+                {"line": h["line"], "text": h["text"], "matched": word}
+            )
 
-    structural_count = sum(1 for h in headings if _match_structural_pattern(h["text"]) is not None)
+    structural_count = sum(
+        1 for h in headings if _match_structural_pattern(h["text"]) is not None
+    )
 
     return {
         "count": count,
@@ -340,7 +353,8 @@ def build_heading_stats(outline: list[dict]) -> dict:
         "total_headings": len(headings),
         "level_distribution": level_distribution,
         "by_level": {
-            str(level): _summarize_heading_group(hs) for level, hs in sorted(by_level.items())
+            str(level): _summarize_heading_group(hs)
+            for level, hs in sorted(by_level.items())
         },
         "overall": _summarize_heading_group(headings),
     }
@@ -352,18 +366,25 @@ def print_heading_stats_human(stats: dict) -> None:
     print()
     print(f"見出し総数: {stats['total_headings']}")
     if stats["level_distribution"]:
-        dist = ", ".join(f"h{level}={n}" for level, n in stats["level_distribution"].items())
+        dist = ", ".join(
+            f"h{level}={n}" for level, n in stats["level_distribution"].items()
+        )
         print(f"レベル分布: {dist}")
 
     def print_group(label: str, g: dict) -> None:
         if g["count"] == 0:
             return
-        print(f"[{label}] 本数={g['count']}  平均長={g['length_mean']}字  "
-              f"長さの変動係数={g['length_cv']}  体言止め率={g['nominal_ending_ratio']:.0%}  "
-              f"品詞パターン一致率={g['dominant_pos_signature_ratio']:.0%}  "
-              f"構造パターン率={g['structural_pattern_ratio']:.0%}")
+        print(
+            f"[{label}] 本数={g['count']}  平均長={g['length_mean']}字  "
+            f"長さの変動係数={g['length_cv']}  体言止め率={g['nominal_ending_ratio']:.0%}  "
+            f"品詞パターン一致率={g['dominant_pos_signature_ratio']:.0%}  "
+            f"構造パターン率={g['structural_pattern_ratio']:.0%}"
+        )
         if g["template_hits"]:
-            hits = ", ".join(f"L{h['line']}:{h['text']}（{h['matched']}）" for h in g["template_hits"])
+            hits = ", ".join(
+                f"L{h['line']}:{h['text']}（{h['matched']}）"
+                for h in g["template_hits"]
+            )
             print(f"  テンプレ見出しヒット: {hits}")
 
     for level, g in stats["by_level"].items():
@@ -392,7 +413,9 @@ def main() -> int:
         description="文書のスケルトン（見出し・各段落の先頭文・箇条書き）を抽出する（CI ゲートではない）。"
     )
     parser.add_argument("file", type=Path, help="対象の Markdown/テキストファイル")
-    parser.add_argument("--json", action="store_true", help="機械可読な JSON で出力する")
+    parser.add_argument(
+        "--json", action="store_true", help="機械可読な JSON で出力する"
+    )
     args = parser.parse_args()
 
     # 「文章の中身に関する判断」と「そもそも実行できない入力エラー」は区別する。
@@ -405,7 +428,13 @@ def main() -> int:
     outline = build_outline(text)
     heading_stats = build_heading_stats(outline)
     if args.json:
-        print(json.dumps({"outline": outline, "heading_stats": heading_stats}, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {"outline": outline, "heading_stats": heading_stats},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     else:
         print_outline_human(args.file, outline)
         print_heading_stats_human(heading_stats)

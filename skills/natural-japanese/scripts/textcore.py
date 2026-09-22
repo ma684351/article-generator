@@ -24,6 +24,7 @@ from pathlib import Path
 # 共有データ構造
 # ---------------------------------------------------------------------------
 
+
 @dataclasses.dataclass
 class Finding:
     line: int
@@ -211,7 +212,9 @@ def mask_html_comments(text: str) -> str:
     masked_lines = []
     in_html_comment = False
     for line in lines:
-        masked_line, in_html_comment = _mask_html_comments_in_line(line, in_html_comment)
+        masked_line, in_html_comment = _mask_html_comments_in_line(
+            line, in_html_comment
+        )
         masked_lines.append(masked_line)
     return "\n".join(masked_lines)
 
@@ -222,7 +225,9 @@ def _blank_inline_code_spans(line: str) -> str:
     line = _INLINE_CODE_SPAN_RE.sub(lambda m: " " * len(m.group(0)), line)
     # `](url)` の url 部分だけ空白化し、`](` と `)` はそのまま残す
     # （text/alt 側は文章の一部として解析対象に残すため）。
-    line = _MARKDOWN_LINK_URL_RE.sub(lambda m: m.group(1) + " " * len(m.group(2)) + m.group(3), line)
+    line = _MARKDOWN_LINK_URL_RE.sub(
+        lambda m: m.group(1) + " " * len(m.group(2)) + m.group(3), line
+    )
     return line
 
 
@@ -271,7 +276,11 @@ def mask_markdown_structure(text: str) -> str:
             is_close_eligible = remainder_after_fence.strip() == ""
             if open_fence is None:
                 open_fence = (fence_char, fence_len)
-            elif fence_char == open_fence[0] and fence_len >= open_fence[1] and is_close_eligible:
+            elif (
+                fence_char == open_fence[0]
+                and fence_len >= open_fence[1]
+                and is_close_eligible
+            ):
                 open_fence = None
             # 種類・長さが一致しない行、あるいは後ろに文字が続く行は
             # 「フェンス内の地の文（例: ```内で ~~ とだけ書いた行や ```これはコード）」
@@ -295,7 +304,6 @@ def mask_markdown_structure(text: str) -> str:
             continue
         masked_lines.append(_blank_inline_code_spans(line))
     return "\n".join(masked_lines)
-
 
 
 def iter_lines_with_no(text: str) -> list[tuple[int, str]]:
@@ -423,7 +431,10 @@ def read_source_file(path: Path) -> tuple[str | None, str | None]:
     if not path.exists():
         return None, f"エラー: ファイルが見つかりません: {path}"
     if path.is_dir():
-        return None, f"エラー: ディレクトリが指定されました（ファイルを指定してください）: {path}"
+        return (
+            None,
+            f"エラー: ディレクトリが指定されました（ファイルを指定してください）: {path}",
+        )
     try:
         return path.read_text(encoding="utf-8"), None
     except (OSError, UnicodeDecodeError) as exc:

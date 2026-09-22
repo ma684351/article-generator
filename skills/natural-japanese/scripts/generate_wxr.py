@@ -39,6 +39,7 @@ WXR_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 </rss>
 """
 
+
 def main():
     if len(sys.argv) < 3:
         print("Usage: python generate_wxr.py <input.json> <output.xml>")
@@ -48,11 +49,11 @@ def main():
     output_file = sys.argv[2]
 
     try:
-        with open(input_file, 'r', encoding='utf-8') as f:
+        with open(input_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         # 必須キーの確認
-        required_keys = ['title', 'slug', 'category_name', 'category_slug', 'content']
+        required_keys = ["title", "slug", "category_name", "category_slug", "content"]
         for key in required_keys:
             if key not in data:
                 print(f"Error: JSONファイルに必須キー '{key}' が含まれていません。")
@@ -64,16 +65,16 @@ def main():
         post_date_gmt = now.strftime("%Y-%m-%d %H:%M:%S")
 
         xml_content = WXR_TEMPLATE.format(
-            title=data['title'],
-            content=data['content'],
-            slug=data['slug'],
-            category_name=data['category_name'],
-            category_slug=data['category_slug'],
+            title=data["title"],
+            content=data["content"],
+            slug=data["slug"],
+            category_name=data["category_name"],
+            category_slug=data["category_slug"],
             post_date=post_date,
-            post_date_gmt=post_date_gmt
+            post_date_gmt=post_date_gmt,
         )
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(xml_content)
 
         print(f"✅ WXRファイルを生成しました: {output_file}")
@@ -81,6 +82,7 @@ def main():
     except Exception as e:  # noqa: BLE001
         print(f"エラーが発生しました: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

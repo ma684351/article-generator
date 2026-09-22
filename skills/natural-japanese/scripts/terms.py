@@ -94,7 +94,9 @@ def _term_context_and_gloss_hint(
     local_idx = line_text.find(term)
     if local_idx == -1:
         # 行内に見つからない場合（マスク処理の副作用等）は行全体を近傍として返す
-        return line_text.strip(), any(marker in line_text for marker in TERMS_GLOSS_MARKER_WORDS)
+        return line_text.strip(), any(
+            marker in line_text for marker in TERMS_GLOSS_MARKER_WORDS
+        )
 
     abs_pos = line_offsets.get(first_line_no, 0) + local_idx
     ctx_start = max(0, abs_pos - TERMS_GLOSS_CONTEXT_CHARS)
@@ -187,7 +189,9 @@ def build_term_inventory(raw_text: str) -> list[dict]:
                 continue
             if _is_proper_noun_or_capitalized_latin_morpheme(m0):
                 j = i + 1
-                while j < n and _is_proper_noun_or_capitalized_latin_morpheme(morphemes[j]):
+                while j < n and _is_proper_noun_or_capitalized_latin_morpheme(
+                    morphemes[j]
+                ):
                     j += 1
                 span_start = m0.begin()
                 span_end = morphemes[j - 1].end()
@@ -233,7 +237,9 @@ def print_terms_human(path: Path, terms: list[dict]) -> None:
         return
     for t in terms:
         hint = "あり" if t["has_gloss_hint"] else "なし"
-        print(f"L{t['first_line']} {t['term']} (出現{t['count']}回, 説明手掛かり: {hint})")
+        print(
+            f"L{t['first_line']} {t['term']} (出現{t['count']}回, 説明手掛かり: {hint})"
+        )
         print(f"    近傍: {t['context']}")
         print()
 
@@ -243,7 +249,9 @@ def main() -> int:
         description="専門用語候補（カタカナ複合語/ASCII英略語/固有名詞）を初出順に抽出する（CI ゲートではない）。"
     )
     parser.add_argument("file", type=Path, help="対象の Markdown/テキストファイル")
-    parser.add_argument("--json", action="store_true", help="機械可読な JSON で出力する")
+    parser.add_argument(
+        "--json", action="store_true", help="機械可読な JSON で出力する"
+    )
     args = parser.parse_args()
 
     # 「文章の中身に関する判断」と「そもそも実行できない入力エラー」は区別する。

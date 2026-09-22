@@ -573,13 +573,14 @@ def compute_baseline_diff(
     return resolved, summary
 
 
-
 # ---------------------------------------------------------------------------
 # 各検出器
 # ---------------------------------------------------------------------------
 
 
-def _raw_or_masked(raw_lines_by_no: dict[int, str] | None, no: int, fallback: str) -> str:
+def _raw_or_masked(
+    raw_lines_by_no: dict[int, str] | None, no: int, fallback: str
+) -> str:
     """行番号に対応する原文行を返す（無ければマスク済み行にフォールバック）。"""
     if raw_lines_by_no is None:
         return fallback
@@ -600,7 +601,9 @@ def detect_forbidden_phrases(
             if idx != -1:
                 start = max(0, idx - 10)
                 end = idx + len(phrase) + 10
-                excerpt = raw_line[start:end] if len(raw_line) >= end else line[start:end]
+                excerpt = (
+                    raw_line[start:end] if len(raw_line) >= end else line[start:end]
+                )
                 is_weak_signal = phrase in FORBIDDEN_PHRASES_WEAK_SIGNAL
                 severity = "info" if is_weak_signal else "warn"
                 detail = f"禁止語/LLM常套句ヒット: 「{phrase}」"
@@ -628,7 +631,9 @@ def detect_translationese(
             for m in re.finditer(pat, line):
                 start = max(0, m.start() - 10)
                 end = m.end() + 10
-                excerpt = raw_line[start:end] if len(raw_line) >= end else line[start:end]
+                excerpt = (
+                    raw_line[start:end] if len(raw_line) >= end else line[start:end]
+                )
                 findings.append(
                     Finding(
                         line=no,
@@ -662,12 +667,18 @@ def detect_antithesis_repetition(
     どの文同士が反復としてカウントされたか追えるよう、全ヒット行番号を
     related_lines / detail の両方に含める。excerpt は原文から切り出す。
     """
-    hits: list[tuple[int, str, str]] = []  # (line_no, matched_excerpt(raw), pattern_name)
+    hits: list[
+        tuple[int, str, str]
+    ] = []  # (line_no, matched_excerpt(raw), pattern_name)
     for no, line in lines:
         raw_line = _raw_or_masked(raw_lines_by_no, no, line)
         for pat in ANTITHESIS_PATTERNS:
             for m in re.finditer(pat, line):
-                excerpt = raw_line[m.start() : m.end()] if len(raw_line) >= m.end() else m.group(0)
+                excerpt = (
+                    raw_line[m.start() : m.end()]
+                    if len(raw_line) >= m.end()
+                    else m.group(0)
+                )
                 hits.append((no, excerpt, pat.pattern))
 
     findings = []
@@ -700,7 +711,6 @@ def detect_antithesis_repetition(
                 )
             )
     return findings
-
 
 
 def detect_low_sentence_length_variance(
@@ -772,7 +782,9 @@ class TokenizedSentence:
     raw_text: str = ""  # 原文（レポートのexcerpt表示は必ずこちらを使う）
 
 
-def tokenize_sentences(sentences: list[tuple[int, str, str]]) -> list[TokenizedSentence]:
+def tokenize_sentences(
+    sentences: list[tuple[int, str, str]],
+) -> list[TokenizedSentence]:
     """文ごとに一度だけ形態素解析し、以後の検出器で使い回す（辞書ロードとトークナイズの
     コストを最小化するための共有キャッシュ）。
     形態素解析はマスク済みテキスト（text）に対して行うが、レポート表示用の原文
@@ -787,7 +799,11 @@ def tokenize_sentences(sentences: list[tuple[int, str, str]]) -> list[TokenizedS
         if not sent:
             continue
         morphemes = list(tokenizer.tokenize(sent, SplitMode.C))
-        result.append(TokenizedSentence(line=no, text=sent, morphemes=morphemes, raw_text=raw_sent or sent))
+        result.append(
+            TokenizedSentence(
+                line=no, text=sent, morphemes=morphemes, raw_text=raw_sent or sent
+            )
+        )
     return result
 
 
@@ -797,7 +813,9 @@ def _strip_leading_symbols(morphemes: list) -> list:
     sudachi はこれらをいずれも「補助記号」として切り出すため、品詞で落とせる。
     """
     i = 0
-    while i < len(morphemes) and morphemes[i].part_of_speech()[0] in TRAILING_SYMBOL_POS:
+    while (
+        i < len(morphemes) and morphemes[i].part_of_speech()[0] in TRAILING_SYMBOL_POS
+    ):
         i += 1
     return morphemes[i:]
 
@@ -1044,7 +1062,11 @@ def detect_rhythm_statistics(
     xs = mora_lengths[:-1]
     ys = mora_lengths[1:]
     autocorr = None
-    if len(xs) >= autocorr_min_xs and statistics.pstdev(xs) > 0 and statistics.pstdev(ys) > 0:
+    if (
+        len(xs) >= autocorr_min_xs
+        and statistics.pstdev(xs) > 0
+        and statistics.pstdev(ys) > 0
+    ):
         mx, my = statistics.mean(xs), statistics.mean(ys)
         cov = sum((a - mx) * (b - my) for a, b in zip(xs, ys)) / len(xs)
         autocorr = cov / (statistics.pstdev(xs) * statistics.pstdev(ys))
@@ -1083,7 +1105,6 @@ def detect_rhythm_statistics(
         "length_autocorrelation_lag1": autocorr,
     }
     return findings, stats
-
 
 
 # 文頭反復の severity 判定: 固有名詞・製品名/技術用語（ラテン文字主体の表層）が
@@ -1173,7 +1194,9 @@ def detect_ngram_repetition(
     for ts in tokenized:
         # 文頭2形態素と同じ理由で、ここでも文頭の補助記号を落としてから品詞列を取る
         # （落とさないと「補助記号/補助記号/名詞/助詞」が量産され一致率が跳ね上がる）。
-        pos_seq = tuple(m.part_of_speech()[0] for m in _strip_leading_symbols(ts.morphemes)[:4])
+        pos_seq = tuple(
+            m.part_of_speech()[0] for m in _strip_leading_symbols(ts.morphemes)[:4]
+        )
         if len(pos_seq) == 4:
             lead_pos_ngrams.append((ts.line, ts.raw_text, pos_seq))
 
@@ -1349,22 +1372,29 @@ def detect_low_specificity(
             if not para_line.strip():
                 continue
             morphemes.extend(tokenizer.tokenize(para_line, SplitMode.C))
-        content_words = [m for m in morphemes if m.part_of_speech()[0] in CONTENT_WORD_POS]
+        content_words = [
+            m for m in morphemes if m.part_of_speech()[0] in CONTENT_WORD_POS
+        ]
         if len(content_words) < min_content_words:
             continue
 
         evaluated += 1
 
         proper_noun_count = sum(
-            1 for m in content_words if m.part_of_speech()[0] == "名詞" and m.part_of_speech()[1] == "固有名詞"
+            1
+            for m in content_words
+            if m.part_of_speech()[0] == "名詞" and m.part_of_speech()[1] == "固有名詞"
         )
         abstract_noun_count = sum(
             1
             for m in content_words
-            if m.part_of_speech()[0] == "名詞" and m.dictionary_form() in ABSTRACT_NOUN_WORDS
+            if m.part_of_speech()[0] == "名詞"
+            and m.dictionary_form() in ABSTRACT_NOUN_WORDS
         )
         numeric_hit_count = len(list(NUMERIC_QUANTITY_RE.finditer(para_masked)))
-        has_example_marker = any(marker in para_masked for marker in EXAMPLE_MARKER_WORDS)
+        has_example_marker = any(
+            marker in para_masked for marker in EXAMPLE_MARKER_WORDS
+        )
 
         n_content = len(content_words)
         proper_noun_density = proper_noun_count / n_content
@@ -1423,8 +1453,12 @@ def detect_low_specificity(
 # 「これ/それ/この事実/〜こと/〜という事実」+ 「は/が」+ 文末近くの
 # 他動詞（〜を〜する系）という表層パターンでヒューリスティックに検出する。
 INANIMATE_SUBJECT_PATTERNS = [
-    re.compile(r"(これ|それ|この事実|そのこと)(は|が).{0,40}(もたらす|示す|意味する|証明する|生み出す|反映する)"),
-    re.compile(r".{0,20}(こと|事実)(は|が).{0,40}(もたらす|示す|意味する|証明する|生み出す|反映する)"),
+    re.compile(
+        r"(これ|それ|この事実|そのこと)(は|が).{0,40}(もたらす|示す|意味する|証明する|生み出す|反映する)"
+    ),
+    re.compile(
+        r".{0,20}(こと|事実)(は|が).{0,40}(もたらす|示す|意味する|証明する|生み出す|反映する)"
+    ),
 ]
 
 # 「それは〜である。なぜなら〜だ」構文（隣接する2文にまたがるので
@@ -1441,7 +1475,11 @@ def detect_english_syntax_smell(
         raw_line = _raw_or_masked(raw_lines_by_no, no, line)
         for pat in INANIMATE_SUBJECT_PATTERNS:
             for m in re.finditer(pat, line):
-                excerpt = raw_line[m.start() : m.end()] if len(raw_line) >= m.end() else m.group(0)
+                excerpt = (
+                    raw_line[m.start() : m.end()]
+                    if len(raw_line) >= m.end()
+                    else m.group(0)
+                )
                 findings.append(
                     Finding(
                         line=no,
@@ -1499,7 +1537,10 @@ def detect_inanimate_subject_morph(tokenized: list[TokenizedSentence]) -> list[F
             if not is_abstract_subject:
                 # 2形態素にまたがる指示表現（「この」+「事実」等）を、
                 # 隣接する形態素を連結した表層文字列で判定する
-                if i + 1 < n and (surfaces[i] + surfaces[i + 1]) in ABSTRACT_PRONOUN_PHRASES:
+                if (
+                    i + 1 < n
+                    and (surfaces[i] + surfaces[i + 1]) in ABSTRACT_PRONOUN_PHRASES
+                ):
                     is_abstract_subject = True
                     subject_end = i + 1
             if not is_abstract_subject:
@@ -1566,9 +1607,7 @@ BOILERPLATE_HEADING_WORDS = {
 NUMBERED_PHASE_RE = re.compile(r"(フェーズ|ステップ|段階|ステージ)\s*[0-90-9１-９]")
 NUMBERED_PHASE_MIN_COUNT = 3
 # 絵文字・装飾記号（代表的なものに限定。厳密な Unicode 絵文字判定は行わない）
-EMOJI_SYMBOL_RE = re.compile(
-    "[\U0001F300-\U0001FAFF☀-➿⭐✅❌❗❓]"
-)
+EMOJI_SYMBOL_RE = re.compile("[\U0001f300-\U0001faff☀-➿⭐✅❌❗❓]")
 EMOJI_SYMBOL_PER_1000_THRESHOLD = 2.0
 
 
@@ -1940,7 +1979,6 @@ def detect_reading_load(
                 )
             )
 
-
         # --- C1: 連続漢字 ---
         for m in _KANJI_RUN_RE.finditer(text):
             # 固有名詞を含む連なりは除外する（「東京地方裁判所」「特定商取引法表示」など）。
@@ -2023,12 +2061,16 @@ def detect_reading_load(
         for k in range(len(no_idx) - READING_LOAD_NO_CHAIN_MIN + 1):
             window = no_idx[k : k + READING_LOAD_NO_CHAIN_MIN]
             gaps_ok = all(y - x <= 3 for x, y in zip(window, window[1:]))
-            if gaps_ok and not _has_punctuation_between(morphemes, window[0], window[-1]):
+            if gaps_ok and not _has_punctuation_between(
+                morphemes, window[0], window[-1]
+            ):
                 findings.append(
                     Finding(
                         line=ts.line,
                         category="no_chain",
-                        excerpt="".join(m.surface() for m in morphemes[window[0] : window[-1] + 1]),
+                        excerpt="".join(
+                            m.surface() for m in morphemes[window[0] : window[-1] + 1]
+                        ),
                         severity="info",
                         detail=(
                             f"格助詞「の」が{READING_LOAD_NO_CHAIN_MIN}連以上。カタログ C2。"
@@ -2042,7 +2084,9 @@ def detect_reading_load(
     return findings
 
 
-def run_reading_load(raw_text: str, genre: str | None = None) -> tuple[list[Finding], dict]:
+def run_reading_load(
+    raw_text: str, genre: str | None = None
+) -> tuple[list[Finding], dict]:
     """読解負荷レーンだけを実行する。
 
     run_lint() とは意図的に独立した関数にしてある。既存の findings / stats /
@@ -2114,7 +2158,9 @@ def run_lint(
     # 太字・番号付きフェーズ・絵文字を誤検知しないよう、HTML コメントのみを同じ長さの
     # 空白に置換したテキストを渡す（行番号・オフセットは raw_text と一致するため、
     # 検出器内で raw_text から excerpt を切り出す既存ロジックはそのまま使える）。
-    structural_findings, structural_stats = detect_structural_ai_habits(mask_html_comments(raw_text))
+    structural_findings, structural_stats = detect_structural_ai_habits(
+        mask_html_comments(raw_text)
+    )
 
     # Markdown の構造行（見出し/リスト/コードブロック/引用/表）とインラインコードスパンは
     # 文章として扱わず、行番号を保ったままマスクしてから解析用テキストとして使う。
@@ -2135,17 +2181,23 @@ def run_lint(
     findings += detect_antithesis_repetition(
         lines,
         raw_lines_by_no,
-        rate_critical_above=profile.get("antithesis_rate_critical_above", ANTITHESIS_RATE_CRITICAL_ABOVE),
+        rate_critical_above=profile.get(
+            "antithesis_rate_critical_above", ANTITHESIS_RATE_CRITICAL_ABOVE
+        ),
     )
     findings += detect_low_sentence_length_variance(sentences)
     findings += detect_english_syntax_smell(lines, raw_lines_by_no)
 
     # --- 形態素解析ベースの検出器（拡張: 品詞列・活用形マッチ） ---
-    nominal_and_conj_findings, morph_stats = detect_nominal_ending_and_paragraph_conjunctions(
-        lines,
-        tokenized,
-        raw_lines_by_no,
-        nominal_min_chars=profile.get("nominal_min_chars", NOMINAL_ENDING_MIN_CHARS),
+    nominal_and_conj_findings, morph_stats = (
+        detect_nominal_ending_and_paragraph_conjunctions(
+            lines,
+            tokenized,
+            raw_lines_by_no,
+            nominal_min_chars=profile.get(
+                "nominal_min_chars", NOMINAL_ENDING_MIN_CHARS
+            ),
+        )
     )
     findings += nominal_and_conj_findings
     findings += detect_translationese_morph(tokenized)
@@ -2157,7 +2209,9 @@ def run_lint(
 
     ngram_findings, ngram_stats = detect_ngram_repetition(
         tokenized,
-        lead_repeat_threshold=profile.get("lead_repeat_threshold", NGRAM_LEAD_REPEAT_THRESHOLD),
+        lead_repeat_threshold=profile.get(
+            "lead_repeat_threshold", NGRAM_LEAD_REPEAT_THRESHOLD
+        ),
     )
     findings += ngram_findings
 
@@ -2247,7 +2301,9 @@ def print_human_report(
 def print_reading_load_report(findings: list[Finding], stats: dict) -> None:
     """読解負荷レーンを、AI臭さの検出結果とは視覚的にも分けて出力する。"""
     print("=== 読解負荷（推敲用の指さし・自然度スコアには含まない） ===")
-    print(f"指摘件数: {stats.get('total', len(findings))}（本文 {stats.get('sentences', 0)} 文）")
+    print(
+        f"指摘件数: {stats.get('total', len(findings))}（本文 {stats.get('sentences', 0)} 文）"
+    )
     if stats.get("by_category"):
         print("カテゴリ別内訳:")
         for cat, count in sorted(stats["by_category"].items(), key=lambda kv: -kv[1]):
@@ -2265,7 +2321,9 @@ def print_reading_load_report(findings: list[Finding], stats: dict) -> None:
             print(f"    詳細    : {f.detail}")
         print()
 
-    print("※ これらは「直すべき欠陥」ではなく「見るべき箇所」。読んで引っかからない文はいじらない。")
+    print(
+        "※ これらは「直すべき欠陥」ではなく「見るべき箇所」。読んで引っかからない文はいじらない。"
+    )
     print("※ 判断は references/readability-antipatterns.md の A〜J カタログに従う。")
 
 
@@ -2274,7 +2332,9 @@ def main() -> int:
         description="AI臭い日本語文章を決定的に検出する lint スクリプト（CI ゲートではない）。"
     )
     parser.add_argument("file", type=Path, help="lint 対象の Markdown/テキストファイル")
-    parser.add_argument("--json", action="store_true", help="機械可読な JSON で出力する")
+    parser.add_argument(
+        "--json", action="store_true", help="機械可読な JSON で出力する"
+    )
     parser.add_argument(
         "--baseline",
         type=Path,
@@ -2325,12 +2385,18 @@ def main() -> int:
     baseline_data = None
     if args.baseline is not None:
         if not args.baseline.exists():
-            print(f"エラー: --baseline ファイルが見つかりません: {args.baseline}", file=sys.stderr)
+            print(
+                f"エラー: --baseline ファイルが見つかりません: {args.baseline}",
+                file=sys.stderr,
+            )
             return 1
         try:
             loaded_baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            print(f"エラー: --baseline ファイルを読み込めません: {args.baseline} ({exc})", file=sys.stderr)
+            print(
+                f"エラー: --baseline ファイルを読み込めません: {args.baseline} ({exc})",
+                file=sys.stderr,
+            )
             return 1
 
         # JSON としては読めても、スキーマが想定外（トップレベルが配列、findings が
@@ -2349,7 +2415,9 @@ def main() -> int:
     reading_load_findings: list[Finding] | None = None
     reading_load_stats: dict | None = None
     if args.reading_load:
-        reading_load_findings, reading_load_stats = run_reading_load(text, genre=args.genre)
+        reading_load_findings, reading_load_stats = run_reading_load(
+            text, genre=args.genre
+        )
 
     resolved: list[dict] = []
     baseline_summary: dict[str, int] | None = None
